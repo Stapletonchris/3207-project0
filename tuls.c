@@ -5,21 +5,14 @@
 
 int main(int argc, char **argv)
 {
-    // //Pritns out the number of arguements passed to the program
-    // printf("Number of arguments: %d\n", argc);
-
-    // //Prints the string for each argument
-    // for(int i = 1; i < argc; i++){
-
-    //     printf("Arg: %d, %s\n", i, argv[i]);
-    // }
-
-    // printf("The value of argc:  %d\n", argc);
-
     DIR *directory;
     struct dirent *entry;
 
     directory = opendir(".");
+
+    // Prints out the number of arguements passed to the program
+    printf("Number of arguments: %d\n", argc);
+
     if (directory == NULL)
     {
         perror("tuls: cannot open directory\n");
@@ -29,8 +22,14 @@ int main(int argc, char **argv)
     // While read through argv print the name of the argument
     while ((entry = readdir(directory)) != NULL)
     {
-
-        printf("%s\n", entry->d_name);
+        if (entry->d_type == DT_REG)
+        {
+            printf("File: %s\n", entry->d_name);
+        }
+        else if (entry->d_type == DT_DIR)
+        {
+            printf("Dir: %s\n", entry->d_name);
+        }
     }
 
     if (closedir(directory) == -1)
