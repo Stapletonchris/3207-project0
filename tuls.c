@@ -4,24 +4,15 @@
 #include <dirent.h>
 #include <sys/stat.h>
 
-void listFiles(const char *filename, DIR *directory);
+void listFiles(const char *directoryName);
 
 int main(int argc, char **argv)
 {
-    // Parse command line arguments
-    DIR *directory = opendir("filename");
-
     // Prints out the number of arguements passed to the program
     printf("Number of arguments: %d\n", argc);
 
-    listFiles("/Project_2", directory);
-
-    return 0;
-}
-
-void listFiles(const char *filename, DIR *directory)
-{
-    struct dirent *entry;
+    // Parse command line arguments
+    DIR *directory = opendir(".");
 
     // Tests whether or not directory exists/can be opened
     if (directory == NULL)
@@ -29,6 +20,31 @@ void listFiles(const char *filename, DIR *directory)
         perror("tuls: cannot open directory\n");
         exit(0);
     }
+    struct dirent *entry;
+
+    while ((entry = readdir(directory)) != NULL)
+    {
+        printf("File: %s\n", entry->d_name);
+    }
+
+    listFiles("./Project_2");
+
+    return 0;
+}
+
+void listFiles(const char *directoryName)
+{
+    // Parse command line arguments
+    DIR *directory = opendir(directoryName);
+
+    // Tests whether or not directory exists/can be opened
+    if (directory == NULL)
+    {
+        perror("tuls: cannot open directory\n");
+        exit(0);
+    }
+
+    struct dirent *entry;
 
     // Read through argc and argv
     while ((entry = readdir(directory)) != NULL)
@@ -41,11 +57,17 @@ void listFiles(const char *filename, DIR *directory)
         }
         else if (entry->d_type == DT_DIR && (strcmp(entry->d_name, ".") != 0) && (strcmp(entry->d_name, "..") != 0))
         {
-            listFiles(".", directory);
-            printf("Dir: %s\n", entry->d_name);
+            // Specifiy the path to the directory
+            char path[100] = {0};
+            strcat(path, directoryName);
+            strcat(path, "/");
+            strcat(path, entry->d_name);
+
+            listFiles(path);
+            printf("Dir: %s/%s\n", directoryName, entry->d_name);
         }
     }
-    // When argc == -1 close the directory
+    // When argc is NULL, close the directory
     if (closedir(directory) == -1)
     {
         // If it failed to close print and error message
