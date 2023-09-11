@@ -3,6 +3,7 @@
 #include <string.h>
 #include <dirent.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 void listFiles(const char *directoryName);
 
@@ -27,7 +28,16 @@ int main(int argc, char **argv)
         printf("File: %s\n", entry->d_name);
     }
 
-    listFiles("./Project_2");
+    if (chdir("/Project_2") == 0)
+    {
+        listFiles(".");
+    }
+    else
+    {
+        perror("chdir() error.");
+    }
+
+    listFiles(".");
 
     return 0;
 }
