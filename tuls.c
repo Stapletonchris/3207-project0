@@ -14,7 +14,7 @@ int main(int argc, char **argv)
     // Prints out the number of arguements passed to the program
     printf("Number of arguments: %d\n", argc);
 
-    listFiles(".", directory);
+    listFiles("/Project_2", directory);
 
     return 0;
 }
