@@ -14,6 +14,7 @@ int main(int argc, char **argv)
 
     // Parse command line arguments
     DIR *directory = opendir(".");
+    struct dirent *entry;
 
     // Tests whether or not directory exists/can be opened
     if (directory == NULL)
@@ -21,25 +22,22 @@ int main(int argc, char **argv)
         perror("tuls: cannot open directory\n");
         exit(0);
     }
-    struct dirent *entry;
 
     while ((entry = readdir(directory)) != NULL)
     {
         printf("File: %s\n", entry->d_name);
     }
 
-    if (chdir("/Project_2") == 0)
-    {
-        listFiles(".");
-    }
-    else
-    {
-        perror("chdir() error.");
-    }
+    // if (argc <= 2)
+    // {
+    listFiles(argv[1]);
+    // }
+    // else
+    // {
+    //     perror("Too many arguments");
+    // }
 
-    listFiles(".");
-
-    return 0;
+    // return 0;
 }
 
 void listFiles(const char *directoryName)
