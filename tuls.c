@@ -23,18 +23,25 @@ int main(int argc, char **argv)
         exit(0);
     }
 
-    if (argc <= 2)
+    if (argc == 2)
     {
         listFiles(argv[1]);
+        while ((entry = readdir(directory)) != NULL)
+        {
+            printf("File: %s\n", entry->d_name);
+        }
+    }
+    else if (argc == 1 || argc == 0)
+    {
+        while ((entry = readdir(directory)) != NULL)
+        {
+            printf("File: %s\n", entry->d_name);
+            exit(0);
+        }
     }
     else
     {
         perror("Too many arguments");
-    }
-
-    while ((entry = readdir(directory)) != NULL)
-    {
-        printf("File: %s\n", entry->d_name);
     }
 
     return 0;
