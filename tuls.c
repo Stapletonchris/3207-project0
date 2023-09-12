@@ -23,6 +23,9 @@ int main(int argc, char **argv)
         exit(0);
     }
 
+    /*If there are more than than more arguement on the command line
+    return an error code. But if no arguement is written return every
+    file/directory in the current directory*/
     if (argc == 2)
     {
         listFiles(argv[1]);
