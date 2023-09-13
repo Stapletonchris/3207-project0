@@ -34,12 +34,17 @@ int main(int argc, char **argv)
             printf("File: %s\n", entry->d_name);
         }
     }
-    else if (argc == 1 || argc == 0)
+    else if (argc == 1)
     {
+        // for (int i = 0; i < argc; i++)
+        // {
+        //     printf("File: %s\n", entry->d_name);
+        //     exit(0);
+        // }
         while ((entry = readdir(directory)) != NULL)
         {
             printf("File: %s\n", entry->d_name);
-            exit(0);
+            // exit(0);
         }
     }
     else
