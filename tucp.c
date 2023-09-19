@@ -25,23 +25,29 @@ int main(int argc, char **argv)
 
     struct dirent *entry;
 
-    if (entry->d_type == DT_REG)
+    if (argc < 4 && entry->d_type == DT_REG)
     {
-        // Command line error check
-        if (argc != 3)
-        {
-            perror("Invalid command line input; Argument number error.");
-            return 1;
-        }
-        else
-        {
-            copyFile(argv[1], argv[2]);
-        }
+        // Copy argv[1] into the file at argv[2]
+        copyFile(argv[1], argv[2]);
     }
-    else if (entry->d_type == DT_DIR)
-    {
-        copyDir(argv[1], argv[2]);
-    }
+
+    // if (entry->d_type == DT_REG)
+    // {
+    //     // Command line error check
+    //     if (argc != 3)
+    //     {
+    //         perror("Invalid command line input; Argument number error.");
+    //         return 1;
+    //     }
+    //     else
+    //     {
+    //         copyFile(argv[1], argv[2]);
+    //     }
+    // }
+    // else if (entry->d_type == DT_DIR)
+    // {
+    //     copyDir(argv[1], argv[2]);
+    // }
 }
 
 void copyFile(const char *fileName, const char *fileCopy)
@@ -53,6 +59,11 @@ void copyFile(const char *fileName, const char *fileCopy)
     fileName = fopen(fileName, "r");
     // Copy file contents to argv[2]
     fileCopy = fopen(fileCopy, "w");
+    if (fileCopy == NULL)
+    {
+        // Creates a new file
+        fileCopy = fopen(fileCopy, fileName);
+    }
 
     // Check if there was an error opening the files
     if (fileCopy == NULL || fileName == NULL)
@@ -105,9 +116,8 @@ void copyDir(const char *dirName, const char *newDir)
             strcat(path, "/");
             strcat(path, entry->d_name);
 
-            listFiles(path);
+            copyfile(path);
             printf("Dir: %s/%s\n", dirName, entry->d_name);
         }
     }
-    // When argc is NULL, close the directory
 }
