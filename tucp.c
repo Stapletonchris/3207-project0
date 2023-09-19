@@ -5,8 +5,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-void copyToDir(const char *dirName, const char *newDir);
-void copyFile(const char *fileName, const char *newFile);
+void copyToDir(const char *fileName, const char *fileCopy);
+void copyFile(const char *fileName, const char *fileCopy);
 
 int main(int argc, char **argv)
 {
@@ -40,7 +40,7 @@ int main(int argc, char **argv)
         }
         else
         {
-            perror("I'm not sure what happend.")
+            perror("I'm not sure what happend.");
         }
     }
 }
@@ -50,7 +50,7 @@ void copyFile(const char *fileName, const char *fileCopy)
     // Parse command line arguments
     FILE *fileName, *fileCopy;
 
-    // Open file at argv[1] to read file contents
+    // Open file at argv[i] to read file contents
     fileName = fopen(fileName, "r");
     // Copy file contents to argv[2]
     fileCopy = fopen(fileCopy, "w");
@@ -80,38 +80,47 @@ void copyFile(const char *fileName, const char *fileCopy)
     fclose(fileCopy);
 }
 
-void copyToDir(const char *dirName, const char *newDir)
+void copyToDir(const char *fileName, const char *fileCopy)
 {
+    // Create file pointers
+    FILE *fileName, *fileCopy;
     // Parse command line arguments
-    DIR *directory = opendir(dirName);
+    DIR *dir = opendir(".");
     struct dirent *entry;
 
     // Tests whether or not directory exists/can be opened
-    if (directory == NULL)
+    if (dir == NULL)
     {
-        perror("tuls: cannot open directory\n");
+        perror("tucp: cannot open directory\n");
         exit(0);
     }
 
-    // Read through argc and argv
-    while ((entry = readdir(directory)) != NULL)
-    {
-        /*If its a regular file return the file name,
-        or if its a directory read through recursively */
-        if (entry->d_type == DT_REG)
-        {
-            printf("File: %s\n", entry->d_name);
-        }
-        else if (entry->d_type == DT_DIR && (strcmp(entry->d_name, ".") != 0) && (strcmp(entry->d_name, "..") != 0))
-        {
-            // Specifiy the path to the directory
-            char path[100] = {0};
-            strcat(path, dirName);
-            strcat(path, "/");
-            strcat(path, entry->d_name);
+    // Open file at argv[i] to read file contents
+    fileName = fopen(fileName, "r");
+    // Copy file contents to argv[2]
+    fileCopy = fopen(fileCopy, "w");
 
-            copyfile(path);
-            printf("Dir: %s/%s\n", dirName, entry->d_name);
-        }
+    // If the file does not exist, create it
+    if (fileCopy == NULL)
+    {
+        // Creates a new file
+        fileCopy = fopen(fileCopy, fileName);
     }
+
+    // Check if there was an error opening the files
+    if (fileName == NULL)
+    {
+        printf("Error opening files.\n");
+        return 1;
+    }
+
+    // Read through the file contents of the file
+    char c;
+    while ((c = fgetc(fileName)) != EOF)
+    {
+        fputc(c, fileCopy);
+    }
+
+    fclose(fileName);
+    fclose(fileCopy);
 }
