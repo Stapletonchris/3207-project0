@@ -59,9 +59,14 @@ void copyFile(const char *srcFileName, const char *destFileName)
     FILE *destFile = fopen(destFileName, "wb");
     if (destFile == NULL)
     {
-        perror("Error opening/creating destination file");
-        fclose(srcFile);
-        exit(1);
+        // Attempt to create the destination file if it doesn't exist
+        destFile = fopen(destFileName, "wb");
+        if (destFile == NULL)
+        {
+            perror("Error opening/creating destination file");
+            fclose(srcFile);
+            exit(1);
+        }
     }
 
     char buffer[1024];
