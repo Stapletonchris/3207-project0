@@ -5,138 +5,132 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-void copyToDir(const char *fileName, const char *fileCopy, const char *dirName);
-void copyFile(const char *fileName, const char *fileCopy);
+void copyFile(const char *srcFileName, const char *destFileName);
+void copyToDir(const char *srcName, const char *destDir);
 
 int main(int argc, char **argv)
 {
-
-    // Parse command line arguments
-    DIR *dir = opendir(".");
-    // Create file pointers
-    FILE *file, *copy;
-
-    // Tests whether or not directory exists/can be opened
-    if (dir == NULL)
+    // Check for the correct number of command-line arguments
+    if (argc < 3)
     {
-        perror("tuls: cannot open directory\n");
-        exit(0);
+        fprintf(stderr, "Usage: %s <source> <destination>\n", argv[0]);
+        return 1;
     }
-
-    struct dirent *entry;
-
-    const char *destination = argv[argc - 1];
 
     for (int i = 1; i < argc - 1; i++)
     {
-        if (entry->d_type == DT_REG)
+        struct stat srcStat;
+        if (stat(argv[i], &srcStat) == -1)
         {
-            // Copy argv[1] into the file at argv[2]
-            copyFile(argv[i], argv[*destination]);
+            perror("Error getting source file/directory information");
+            continue;
         }
-        else if (entry->d_type == DT_DIR)
+
+        if (S_ISREG(srcStat.st_mode))
         {
-            copyToDir(argv[i], argv[*destination]);
+            // Copy source file to destination file
+            copyFile(argv[i], argv[argc - 1]);
+        }
+        else if (S_ISDIR(srcStat.st_mode))
+        {
+            // Copy source directory contents to destination directory
+            copyToDir(argv[i], argv[argc - 1]);
         }
         else
         {
-            perror("I'm not sure what happend.");
-        }
-    }
-}
-
-void copyFile(const char *fileName, const char *fileCopy)
-{
-    // Parse command line arguments
-    FILE *fileName, *fileCopy;
-
-    // Open file at argv[i] to read file contents
-    fileName = fopen(fileName, "r");
-    // Check if file exists
-    if (fileName == NULL)
-    {
-        perror("Couldn't find file.");
-    }
-    // Copy file contents to argv[2]
-    fileCopy = fopen(fileCopy, "w");
-    if (fileCopy == NULL)
-    {
-        // Attempt to create the destination file if it doesn't exist
-        fileCopy = fopen(fileCopy, "wb");
-        if (fileCopy == NULL)
-        {
-            perror("Error opening/creating destination file");
-            fclose(fileName);
-            exit(1);
+            fprintf(stderr, "Unsupported file type for source: %s\n", argv[i]);
         }
     }
 
-    // If the file does not exist, create it
-    if (fileCopy == NULL)
-    {
-        // Creates a new file
-        fileCopy = fopen(fileCopy, fileName);
-    }
-
-    // Check if there was an error opening the files
-    if (fileName == NULL)
-    {
-        printf("Error opening files.\n");
-        return 1;
-    }
-
-    // Read through the file contents of the file
-    char c;
-    while ((c = fgetc(fileName)) != EOF)
-    {
-        fputc(c, fileCopy);
-    }
-
-    fclose(fileName);
-    fclose(fileCopy);
+    return 0;
 }
 
-void copyToDir(const char *fileName, const char *fileCopy, const char *dirName)
+void copyFile(const char *srcFileName, const char *destFileName)
 {
-    // Create file pointers
-    FILE *fileName, *fileCopy;
-    // Parse command line arguments
-    DIR *dir = opendir(dirName);
+    // Open the source file for reading
+    FILE *srcFile = fopen(srcFileName, "rb");
+    if (srcFile == NULL)
+    {
+        perror("Error opening source file");
+        exit(1);
+    }
+
+    // Open or create the destination file for writing
+    FILE *destFile = fopen(destFileName, "wb");
+    if (destFile == NULL)
+    {
+        perror("Error opening/creating destination file");
+        fclose(srcFile);
+        exit(1);
+    }
+
+    char buffer[1024];
+    size_t bytesRead;
+
+    // Copy data from source to destination
+    while ((bytesRead = fread(buffer, 1, sizeof(buffer), srcFile)) > 0)
+    {
+        fwrite(buffer, 1, bytesRead, destFile);
+    }
+
+    // Close files
+    fclose(srcFile);
+    fclose(destFile);
+}
+
+void copyToDir(const char *srcName, const char *destDir)
+{
+    // Open the source directory
+    DIR *srcDir = opendir(srcName);
+    if (srcDir == NULL)
+    {
+        perror("Error opening source directory");
+        return;
+    }
+
+    // Attempt to create the destination directory if it doesn't exist
+    if (mkdir(destDir, 0755) != 0)
+    {
+        perror("Error creating destination directory");
+        closedir(srcDir);
+        return;
+    }
+
     struct dirent *entry;
 
-    // Tests whether or not directory exists/can be opened
-    if (dir == NULL)
+    // Traverse the source directory
+    while ((entry = readdir(srcDir)))
     {
-        perror("tucp: cannot open directory\n");
-        exit(0);
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
+        {
+            continue; // Skip "." and ".." entries
+        }
+
+        char srcPath[strlen(srcName) + strlen(entry->d_name) + 2];
+        char destPath[strlen(destDir) + strlen(entry->d_name) + 2];
+
+        snprintf(srcPath, sizeof(srcPath), "%s/%s", srcName, entry->d_name);
+        snprintf(destPath, sizeof(destPath), "%s/%s", destDir, entry->d_name);
+
+        struct stat statbuf;
+        if (stat(srcPath, &statbuf) == -1)
+        {
+            perror("Error getting file/directory information");
+            continue;
+        }
+
+        if (S_ISDIR(statbuf.st_mode))
+        {
+            // Recursively copy directories
+            copyToDir(srcPath, destPath);
+        }
+        else if (S_ISREG(statbuf.st_mode))
+        {
+            // Copy regular files
+            copyFile(srcPath, destPath);
+        }
     }
 
-    // Open file at argv[i] to read file contents
-    fileName = fopen(fileName, "r");
-    // Copy file contents to argv[2]
-    fileCopy = fopen(fileCopy, "w");
-
-    // If the file does not exist, create it
-    if (fileCopy == NULL)
-    {
-        // Creates a new file
-        fileCopy = fopen(fileCopy, fileName);
-    }
-
-    // Check if there was an error opening the files
-    if (fileName == NULL)
-    {
-        printf("Error opening files.\n");
-        return 1;
-    }
-
-    // Read through the file contents of the file
-    char c;
-    while ((c = fgetc(fileName)) != EOF)
-    {
-        fputc(c, fileCopy);
-    }
-
-    fclose(fileName);
-    fclose(fileCopy);
+    // Close the source directory
+    closedir(srcDir);
 }
