@@ -5,7 +5,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-void copyToDir(const char *fileName, const char *fileCopy);
+void copyToDir(const char *fileName, const char *fileCopy, const char *dirName);
 void copyFile(const char *fileName, const char *fileCopy);
 
 int main(int argc, char **argv)
@@ -27,7 +27,7 @@ int main(int argc, char **argv)
 
     const char *destination = argv[argc - 1];
 
-    for (int i = 0; i < argc; i++)
+    for (int i = 1; i < argc - 1; i++)
     {
         if (entry->d_type == DT_REG)
         {
@@ -52,8 +52,24 @@ void copyFile(const char *fileName, const char *fileCopy)
 
     // Open file at argv[i] to read file contents
     fileName = fopen(fileName, "r");
+    // Check if file exists
+    if (fileName == NULL)
+    {
+        perror("Couldn't find file.");
+    }
     // Copy file contents to argv[2]
     fileCopy = fopen(fileCopy, "w");
+    if (fileCopy == NULL)
+    {
+        // Attempt to create the destination file if it doesn't exist
+        fileCopy = fopen(fileCopy, "wb");
+        if (fileCopy == NULL)
+        {
+            perror("Error opening/creating destination file");
+            fclose(fileName);
+            exit(1);
+        }
+    }
 
     // If the file does not exist, create it
     if (fileCopy == NULL)
@@ -80,12 +96,12 @@ void copyFile(const char *fileName, const char *fileCopy)
     fclose(fileCopy);
 }
 
-void copyToDir(const char *fileName, const char *fileCopy)
+void copyToDir(const char *fileName, const char *fileCopy, const char *dirName)
 {
     // Create file pointers
     FILE *fileName, *fileCopy;
     // Parse command line arguments
-    DIR *dir = opendir(".");
+    DIR *dir = opendir(dirName);
     struct dirent *entry;
 
     // Tests whether or not directory exists/can be opened
