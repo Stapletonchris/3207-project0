@@ -50,40 +50,91 @@ int main(int argc, char **argv)
 
 void copyFile(const char *srcFileName, const char *destFileName)
 {
-    // Open the source file for reading
-    FILE *srcFile = fopen(srcFileName, "rb");
-    if (srcFile == NULL)
+    // Check if destFileName is a directory
+    struct stat destStat;
+    if (stat(destFileName, &destStat) == 0 && S_ISDIR(destStat.st_mode))
     {
-        perror("Error opening source file");
-        exit(1);
-    }
+        // If destFileName is a directory, construct the destination path within that directory
+        char *srcBaseName = strrchr(srcFileName, '/');
+        if (srcBaseName == NULL)
+        {
+            srcBaseName = (char *)srcFileName;
+        }
+        else
+        {
+            srcBaseName++; // Skip the slash
+        }
 
-    // Open or create the destination file for writing
-    FILE *destFile = fopen(destFileName, "wb");
-    if (destFile == NULL)
-    {
-        // Attempt to create the destination file if it doesn't exist
-        destFile = fopen(destFileName, "wb");
+        char destFilePath[strlen(destFileName) + strlen(srcBaseName) + 2];
+        snprintf(destFilePath, sizeof(destFilePath), "%s/%s", destFileName, srcBaseName);
+
+        // Open the destination file for writing
+        FILE *destFile = fopen(destFilePath, "wb");
         if (destFile == NULL)
         {
             perror("Error opening/creating destination file");
-            fclose(srcFile);
+            return;
+        }
+
+        // Open the source file for reading
+        FILE *srcFile = fopen(srcFileName, "rb");
+        if (srcFile == NULL)
+        {
+            perror("Error opening source file");
+            fclose(destFile);
+            return;
+        }
+
+        char buffer[1024];
+        size_t bytesRead;
+
+        // Copy data from source to destination
+        while ((bytesRead = fread(buffer, 1, sizeof(buffer), srcFile)) > 0)
+        {
+            fwrite(buffer, 1, bytesRead, destFile);
+        }
+
+        // Close files
+        fclose(srcFile);
+        fclose(destFile);
+    }
+    else
+    {
+        // Open the source file for reading
+        FILE *srcFile = fopen(srcFileName, "rb");
+        if (srcFile == NULL)
+        {
+            perror("Error opening source file");
             exit(1);
         }
+
+        // Open or create the destination file for writing
+        FILE *destFile = fopen(destFileName, "wb");
+        if (destFile == NULL)
+        {
+            // Attempt to create the destination file if it doesn't exist
+            destFile = fopen(destFileName, "wb");
+            if (destFile == NULL)
+            {
+                perror("Error opening/creating destination file");
+                fclose(srcFile);
+                exit(1);
+            }
+        }
+
+        char buffer[1024];
+        size_t bytesRead;
+
+        // Copy data from source to destination
+        while ((bytesRead = fread(buffer, 1, sizeof(buffer), srcFile)) > 0)
+        {
+            fwrite(buffer, 1, bytesRead, destFile);
+        }
+
+        // Close files
+        fclose(srcFile);
+        fclose(destFile);
     }
-
-    char buffer[1024];
-    size_t bytesRead;
-
-    // Copy data from source to destination
-    while ((bytesRead = fread(buffer, 1, sizeof(buffer), srcFile)) > 0)
-    {
-        fwrite(buffer, 1, bytesRead, destFile);
-    }
-
-    // Close files
-    fclose(srcFile);
-    fclose(destFile);
 }
 
 void copyToDir(const char *srcName, const char *destDir)
@@ -96,13 +147,13 @@ void copyToDir(const char *srcName, const char *destDir)
         return;
     }
 
-    // Attempt to create the destination directory if it doesn't exist
-    if (mkdir(destDir, 0755) != 0)
-    {
-        perror("Error creating destination directory");
-        closedir(srcDir);
-        return;
-    }
+    // // Attempt to create the destination directory if it doesn't exist
+    // if (mkdir(destDir, 0755) != 0)
+    // {
+    //     perror("Error creating destination directory");
+    //     closedir(srcDir);
+    //     return;
+    // }
 
     struct dirent *entry;
 
