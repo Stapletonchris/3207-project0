@@ -17,18 +17,23 @@ int main(int argc, char **argv)
         return 1;
     }
 
+    /*The final argument wil always be the destination */
     const char *dest = argv[argc - 1];
 
     // Iterate through the command-line arguments
     for (int i = 1; i < argc - 1; i++)
     {
         struct stat srcStat;
+        // If the info at argv[i] can't be opened cause an error
         if (stat(argv[i], &srcStat) == -1)
         {
             perror("Error getting source file/directory information");
             continue;
         }
 
+        /*If its a regular file runt the copyFile function
+        and if its a directory run the copyToDir(),
+        otherwise print an error*/
         if (S_ISREG(srcStat.st_mode))
         {
             // Copy source file to destination
